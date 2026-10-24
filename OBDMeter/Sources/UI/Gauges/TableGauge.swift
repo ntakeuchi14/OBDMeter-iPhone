@@ -120,12 +120,12 @@ private struct TableCell: View {
 }
 
 /// 折り返して並べるレイアウト (凡例用)
-struct FlowLayout: Layout {
+struct FlowLayout: SwiftUI.Layout {
     var spacing: CGFloat = 8
     var lineSpacing: CGFloat = 2
     var alignment: HorizontalAlignment = .leading
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+    func sizeThatFits(proposal: ProposedViewSize, subviews: LayoutSubviews, cache: inout ()) -> CGSize {
         let maxW = proposal.width ?? .infinity
         var x: CGFloat = 0, y: CGFloat = 0, lineH: CGFloat = 0, widest: CGFloat = 0
         for v in subviews {
@@ -138,7 +138,7 @@ struct FlowLayout: Layout {
         return CGSize(width: proposal.width ?? widest, height: y + lineH)
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: LayoutSubviews, cache: inout ()) {
         var lines: [[(LayoutSubview, CGSize)]] = [[]]
         var x: CGFloat = 0
         for v in subviews {
