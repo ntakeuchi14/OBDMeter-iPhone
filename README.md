@@ -20,8 +20,8 @@ SwiftUI で作り直しています。設定のバックアップ (zip) は Andr
 GitHub Actions (macOS) で未署名の IPA を作ります。
 
 1. `main` に push すると [iOS Build](../../actions/workflows/ios.yml) が動きます。
-2. 終わったら実行結果の画面の Artifacts から `OBDMeter-unsigned-ipa` をダウンロードし、zip を展開すると `OBDMeter-xxxx-unsigned.ipa` が入っています。
-3. `v` で始まるタグ (例: `v1.0.0`) を push すると、Releases にも IPA が添付されます。
+2. 終わると [Releases の Latest](../../releases/latest) に `OBDMeter-xxxx-unsigned.ipa` が置かれます (iPhone の Safari からもダウンロードできます)。
+3. 実行結果の画面の Artifacts (`OBDMeter-unsigned-ipa`) からもダウンロードできます (zip を展開すると IPA)。
 
 ## iPhone へのインストール (Sideloadly)
 
