@@ -1,0 +1,62 @@
+name: iOS Build
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app || sudo xcode-select -s /Applications/Xcode.app
+          xcodebuild -version
+
+      - name: Generate project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Build (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild -project OBDMeter.xcodeproj -scheme OBDMeter -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            SYMROOT="$PWD/build" build 2>&1 | tee build.log | grep -E "error:|warning: unre|BUILD" || true
+          test -d build/Release-iphoneos/OBDMeter.app
+
+      - name: Report compile errors
+        if: failure()
+        run: |
+          msg=$(grep -E "error:" build.log | sort -u | head -40 | sed -e 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+          echo "::error title=Build errors::${msg}"
+
+      - name: Package IPA
+        run: |
+          VERSION=$(git describe --tags --always)
+          mkdir Payload
+          cp -R build/Release-iphoneos/OBDMeter.app Payload/
+          zip -qry "OBDMeter-${VERSION}-unsigned.ipa" Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: OBDMeter-unsigned-ipa
+          path: OBDMeter-*-unsigned.ipa
+          retention-days: 30
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: OBDMeter-*-unsigned.ipa
