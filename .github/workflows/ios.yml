@@ -28,17 +28,19 @@ jobs:
 
       - name: Build (unsigned)
         run: |
-          set -o pipefail
+          rc=0
           xcodebuild -project OBDMeter.xcodeproj -scheme OBDMeter -configuration Release \
             -sdk iphoneos -destination 'generic/platform=iOS' \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            SYMROOT="$PWD/build" build 2>&1 | tee build.log | grep -E "error:|warning: unre|BUILD" || true
-          test -d build/Release-iphoneos/OBDMeter.app
+            SYMROOT="$PWD/build" build > build.log 2>&1 || rc=$?
+          grep -E "error:|\*\* BUILD" build.log | sort -u | head -100 || true
+          test $rc -eq 0
+          test -f build/Release-iphoneos/OBDMeter.app/OBDMeter
 
       - name: Report compile errors
         if: failure()
         run: |
-          msg=$(grep -E "error:" build.log | sort -u | head -40 | sed -e 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+          msg=$(grep -E "error:" build.log | sed -e "s#$PWD/##" | sort -u | head -80 | sed -e 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
           echo "::error title=Build errors::${msg}"
 
       - name: Package IPA
